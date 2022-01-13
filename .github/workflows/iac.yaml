@@ -1,0 +1,47 @@
+name: 'epam-devops-webinar-pipeline'
+
+on:
+  push:
+    branches:
+      - main
+      - feature/pipeline
+
+jobs:
+  lambda-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: installing-tf-compliance
+        run: |
+          pip install terraform-compliance
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.9
+
+        # Configure AWS credentials
+      - name: Setup AWS Credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  
+      - name: Terraform Init 
+        id: init
+        run: |
+          terraform init
+      - name: Terraform Plan
+        id: plan
+        env:
+          TF_VAR_AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          TF_VAR_AWS_ROLE_EXTERNAL_ID: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
+          TF_VAR_DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        run: | 
+          terraform plan -var region=${{ secrets.AWS_REGION }} -out=plan.out
+      - name: Terraform compliance
+        id: compliance
+        run: | 
+          terraform-compliance -f compliance/ -p plan.out

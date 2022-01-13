@@ -4,6 +4,8 @@
 # .tfstate files
 *.tfstate
 *.tfstate.*
+plan.out
+plan.out.json
 
 # Crash log files
 crash.log

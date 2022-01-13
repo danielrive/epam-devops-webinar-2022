@@ -39,26 +39,72 @@ module "secret_manager" {
 }
 
 
+module "secret_manager_k8" {
+  source    = "./modules/secret_manager"
+  NAME      = "secret_k8_${var.environment}"
+  RETENTION = 10
+  KMS_KEY   = module.kms_secret_manager.ARN_KMS
+}
+
 resource "aws_s3_bucket" "bucket_test" {
   bucket = "my-bucket-forcompliance-test"
 
   server_side_encryption_configuration {
     rule {
+      /*   
       apply_server_side_encryption_by_default {
         sse_algorithm = "AES256"
       }
-      /*   
+      */
+
       apply_server_side_encryption_by_default {
         kms_master_key_id = module.kms_secret_manager.ARN_KMS
         sse_algorithm     = "aws:kms"
       }
-  */
+
+
     }
 
   }
 
   tags = {
     Name        = "bucket_${var.environment}"
+    Environment = "develop"
+    Owner       = "DanielR"
+  }
+}
+
+resource "aws_s3_bucket" "bucket_test2" {
+  bucket = "my-bucket-forcompliance-test"
+
+  server_side_encryption_configuration {
+    rule {
+
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = module.kms_secret_manager.ARN_KMS
+        sse_algorithm     = "aws:kms"
+      }
+
+    }
+
+  }
+
+  tags = {
+    Name        = "bucket_${var.environment}"
+    Environment = "develop"
+    Owner       = "DanielR"
+  }
+}
+
+
+resource "aws_secretsmanager_secret" "secret_manager2" {
+  name                    = "test"
+  recovery_window_in_days = 10
+  lifecycle {
+    create_before_destroy = true
+  }
+  tags = {
+    Name        = "test"
     Environment = "develop"
     Owner       = "DanielR"
   }

@@ -7,7 +7,7 @@ on:
       - feature/pipeline
 
 jobs:
-  lambda-deploy:
+  infra-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
